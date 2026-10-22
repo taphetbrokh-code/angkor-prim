@@ -125,15 +125,18 @@ class VideoOption {
   final String label;
   final int height;
   final String url;
+  final bool hls;
 
-  const VideoOption({required this.label, required this.height, required this.url});
+  const VideoOption(
+      {required this.label, required this.height, required this.url, this.hls = false});
 }
 
 class PlayStreams {
   final String audioUrl;
+  final bool audioHls;
   final List<VideoOption> videos;
 
-  const PlayStreams({required this.audioUrl, required this.videos});
+  const PlayStreams({required this.audioUrl, required this.videos, this.audioHls = false});
 }
 
 // ---------- formatting helpers ----------
