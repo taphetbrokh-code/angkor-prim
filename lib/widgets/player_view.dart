@@ -121,7 +121,7 @@ class _PlayerViewState extends State<PlayerView> {
             padding: const EdgeInsets.all(16),
             child: Column(mainAxisSize: MainAxisSize.min, children: [
               Text(p.error!,
-                  maxLines: 4,
+                  maxLines: 12,
                   overflow: TextOverflow.ellipsis,
                   textAlign: TextAlign.center,
                   style: const TextStyle(fontSize: 12)),
