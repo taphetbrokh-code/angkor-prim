@@ -1,4 +1,7 @@
 // ignore_for_file: deprecated_member_use
+import 'dart:async';
+
+import 'package:flutter/foundation.dart';
 import 'package:youtube_explode_dart/youtube_explode_dart.dart' as y;
 
 import '../models.dart';
@@ -91,41 +94,59 @@ class YtService {
     return mp4.isNotEmpty ? mp4.withHighestBitrate() : m.audioOnly.withHighestBitrate();
   }
 
+  /// What the player is doing right now (shown under the spinner).
+  static final ValueNotifier<String> status = ValueNotifier('');
+
   /// Find a manifest whose streams YouTube actually lets us download.
-  static Future<y.StreamManifest> _workingManifest(String id) async {
+  /// All clients are tried at the same time; the first one that works wins.
+  static Future<y.StreamManifest> _workingManifest(String id) {
     final errors = <String>[];
-    final order = [
-      _goodClient,
-      for (var i = 0; i < _clients.length; i++)
-        if (i != _goodClient) i,
-    ];
-    for (final i in order) {
+    final done = Completer<y.StreamManifest>();
+    var pending = _clients.length;
+    status.value = 'កំពុងភ្ជាប់ YouTube (${_clients.length} វិធី)...';
+
+    Future<void> tryClient(int i) async {
       final (name, clients) = _clients[i];
       try {
         final m = await _yt.videos.streamsClient
             .getManifest(id, ytClients: clients)
-            .timeout(const Duration(seconds: 15));
+            .timeout(const Duration(seconds: 25));
+        if (done.isCompleted) return;
         final audio = _bestAudio(m);
         final y.StreamInfo? probe = audio ??
             (m.muxed.isNotEmpty ? m.muxed.withHighestBitrate() : null) ??
             (m.hls.isNotEmpty ? m.hls.first : null);
-        if (probe == null) {
-          errors.add('$name: no streams');
-          continue;
-        }
+        if (probe == null) throw Exception('no streams');
         // probe: can we really download the first bytes?
         await _yt.videos.streamsClient
             .get(probe)
             .first
-            .timeout(const Duration(seconds: 10));
-        _goodClient = i;
-        return m;
+            .timeout(const Duration(seconds: 12));
+        if (!done.isCompleted) {
+          _goodClient = i;
+          status.value = 'ប្រើ $name';
+          done.complete(m);
+        }
       } catch (e) {
         final msg = '$e'.split('\n').first;
         errors.add('$name: ${msg.length > 140 ? msg.substring(0, 140) : msg}');
+        if (!done.isCompleted) {
+          status.value = 'បរាជ័យ ${errors.length}/${_clients.length} វិធី...';
+        }
+      } finally {
+        pending--;
+        if (pending == 0 && !done.isCompleted) {
+          done.completeError(Exception(errors.join('\n')));
+        }
       }
     }
-    throw Exception(errors.join('\n'));
+
+    // The client that worked last time gets a small head start.
+    tryClient(_goodClient);
+    for (var i = 0; i < _clients.length; i++) {
+      if (i != _goodClient) tryClient(i);
+    }
+    return done.future;
   }
 
   static Future<PlayStreams> streams(String id) async {
