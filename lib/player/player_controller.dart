@@ -8,6 +8,7 @@ import 'package:video_player/video_player.dart';
 
 import '../models.dart';
 import '../services/library_store.dart';
+import '../services/stream_proxy.dart';
 import '../services/yt_service.dart';
 
 /// The single playback engine of the app.
@@ -125,7 +126,8 @@ class PlayerController extends ChangeNotifier with WidgetsBindingObserver {
     } catch (e) {
       if (token != _token) return;
       loading = false;
-      error = 'មិនអាចចាក់វីដេអូនេះបានទេ។ សូមព្យាយាមម្តងទៀត។\n$e';
+      final detail = StreamProxy.instance.lastError;
+      error = 'មិនអាចចាក់វីដេអូនេះបានទេ។ សូមព្យាយាមម្តងទៀត។\n$e${detail == null ? '' : '\n$detail'}';
       notifyListeners();
     }
     _loadRelated(token);
