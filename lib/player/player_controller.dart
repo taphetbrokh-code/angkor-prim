@@ -432,7 +432,7 @@ class PlayerController extends ChangeNotifier with WidgetsBindingObserver {
           : [DeviceOrientation.landscapeLeft, DeviceOrientation.landscapeRight]);
     } else {
       SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
-      SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]);
+      SystemChrome.setPreferredOrientations([]);
     }
     notifyListeners();
   }
