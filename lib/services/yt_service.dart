@@ -75,10 +75,14 @@ class YtService {
 
     // ---- audio ----
     final proxy = StreamProxy.instance;
+    await proxy.reset();
     Future<String> local(y.StreamInfo s, String kind) => proxy.wrap(
-        s.url,
-        s.size.totalBytes,
-        '$kind/${s.container == y.StreamContainer.mp4 ? 'mp4' : s.container.name}');
+          key: '${id}_${s.tag}',
+          open: () => _yt.videos.streamsClient.get(s),
+          length: s.size.totalBytes,
+          mime:
+              '$kind/${s.container == y.StreamContainer.mp4 ? 'mp4' : s.container.name}',
+        );
 
     String? audioUrl;
     final mp4Audio =
