@@ -47,7 +47,11 @@ jobs:
         run: bash tool/setup_android.sh
 
       - name: Get packages
-        run: flutter pub get
+        run: |
+          flutter pub get
+          # flutter_inappwebview_android uses a ProGuard file newer Gradle rejects
+          find ~/.pub-cache/hosted -path '*flutter_inappwebview_android*' -name 'build.gradle*' \
+            -exec sed -i "s/proguard-android.txt/proguard-android-optimize.txt/g" {} +
 
       - name: App icon
         run: dart run flutter_launcher_icons
