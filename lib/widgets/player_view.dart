@@ -8,6 +8,7 @@ import '../main.dart';
 import '../models.dart';
 import '../player/player_controller.dart';
 import '../services/library_store.dart';
+import '../services/yt_service.dart';
 import 'common.dart';
 
 /// The video area with YouTube-like overlay controls.
@@ -139,7 +140,17 @@ class _PlayerViewState extends State<PlayerView> {
           ),
         )
       else if (p.loading || p.videoLoading)
-        const Center(child: CircularProgressIndicator(color: kAccent)),
+        Center(
+          child: Column(mainAxisSize: MainAxisSize.min, children: [
+            const CircularProgressIndicator(color: kAccent),
+            const SizedBox(height: 70),
+            ValueListenableBuilder<String>(
+              valueListenable: YtService.status,
+              builder: (_, s, __) => Text(s,
+                  style: const TextStyle(fontSize: 12, color: Colors.white70)),
+            ),
+          ]),
+        ),
     ]);
   }
 
