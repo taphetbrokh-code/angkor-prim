@@ -388,7 +388,17 @@ class _PagedVideoListState extends State<PagedVideoList> {
   @override
   Widget build(BuildContext context) {
     final hasHeader = widget.header != null;
-    final count = _items.length + 1 + (hasHeader ? 1 : 0);
+    final width = MediaQuery.of(context).size.width;
+    // Tablet / landscape: show a 2-3 column grid like YouTube does.
+    final cols = width >= 1100 ? 3 : (width >= 680 ? 2 : 1);
+    final perRow = widget.compact ? (width >= 900 ? 2 : 1) : cols;
+    final rows = (_items.length + perRow - 1) ~/ perRow;
+    final count = rows + 1 + (hasHeader ? 1 : 0);
+
+    Widget cell(int i) => widget.compact
+        ? VideoTile(_items[i], onTap: () => _tap(i))
+        : VideoCard(_items[i], onTap: () => _tap(i));
+
     return RefreshIndicator(
       onRefresh: _refresh,
       child: ListView.builder(
@@ -400,11 +410,22 @@ class _PagedVideoListState extends State<PagedVideoList> {
             if (i == 0) return widget.header!;
             i -= 1;
           }
-          if (i < _items.length) {
-            final v = _items[i];
-            return widget.compact
-                ? VideoTile(v, onTap: () => _tap(i))
-                : VideoCard(v, onTap: () => _tap(i));
+          if (i < rows) {
+            if (perRow == 1) return cell(i);
+            return Padding(
+              padding: EdgeInsets.symmetric(horizontal: widget.compact ? 0 : 8),
+              child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                for (var k = 0; k < perRow; k++)
+                  Expanded(
+                    child: i * perRow + k < _items.length
+                        ? Padding(
+                            padding: EdgeInsets.symmetric(horizontal: widget.compact ? 0 : 6),
+                            child: cell(i * perRow + k),
+                          )
+                        : const SizedBox.shrink(),
+                  ),
+              ]),
+            );
           }
           if (_error != null && _items.isEmpty) {
             return Padding(
