@@ -70,8 +70,61 @@ class YtService {
 
   /// Resolve playable stream URLs: one audio stream (master) and a list of
   /// video-only qualities (shown muted, synced to the audio).
+  // Clients to try, in order. The first one whose audio can really be
+  // downloaded wins and is remembered, so the next video starts faster.
+  static final List<(String, List<y.YoutubeApiClient>?)> _clients = [
+    ('androidVr', [y.YoutubeApiClient.androidVr]),
+    ('ios', [y.YoutubeApiClient.ios]),
+    ('default', null),
+    ('tv', [y.YoutubeApiClient.tv]),
+    ('mweb', [y.YoutubeApiClient.mweb]),
+  ];
+  static int _goodClient = 0;
+
+  static y.AudioOnlyStreamInfo? _bestAudio(y.StreamManifest m) {
+    if (m.audioOnly.isEmpty) return null;
+    final mp4 =
+        m.audioOnly.where((s) => s.container == y.StreamContainer.mp4).toList();
+    return mp4.isNotEmpty ? mp4.withHighestBitrate() : m.audioOnly.withHighestBitrate();
+  }
+
+  /// Find a manifest whose streams YouTube actually lets us download.
+  static Future<y.StreamManifest> _workingManifest(String id) async {
+    final errors = <String>[];
+    final order = [
+      _goodClient,
+      for (var i = 0; i < _clients.length; i++)
+        if (i != _goodClient) i,
+    ];
+    for (final i in order) {
+      final (name, clients) = _clients[i];
+      try {
+        final m = await _yt.videos.streamsClient
+            .getManifest(id, ytClients: clients)
+            .timeout(const Duration(seconds: 15));
+        final audio = _bestAudio(m);
+        if (audio == null && m.muxed.isEmpty) {
+          errors.add('$name: no streams');
+          continue;
+        }
+        // probe: can we really download the first bytes?
+        final y.StreamInfo probe = audio ?? m.muxed.withHighestBitrate();
+        await _yt.videos.streamsClient
+            .get(probe)
+            .first
+            .timeout(const Duration(seconds: 8));
+        _goodClient = i;
+        return m;
+      } catch (e) {
+        final msg = '$e';
+        errors.add('$name: ${msg.length > 120 ? msg.substring(0, 120) : msg}');
+      }
+    }
+    throw Exception(errors.join('\n'));
+  }
+
   static Future<PlayStreams> streams(String id) async {
-    final m = await _yt.videos.streamsClient.getManifest(id);
+    final m = await _workingManifest(id);
 
     // ---- audio ----
     final proxy = StreamProxy.instance;
@@ -85,13 +138,8 @@ class YtService {
         );
 
     String? audioUrl;
-    final mp4Audio =
-        m.audioOnly.where((s) => s.container == y.StreamContainer.mp4).toList();
-    if (mp4Audio.isNotEmpty) {
-      audioUrl = await local(mp4Audio.withHighestBitrate(), 'audio');
-    } else if (m.audioOnly.isNotEmpty) {
-      audioUrl = await local(m.audioOnly.withHighestBitrate(), 'audio');
-    }
+    final bestAudio = _bestAudio(m);
+    if (bestAudio != null) audioUrl = await local(bestAudio, 'audio');
 
     // ---- video ----
     final byHeight = <int, VideoOption>{};
