@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:flutter_inappwebview/flutter_inappwebview.dart';
 import 'package:just_audio/just_audio.dart';
 import 'package:video_player/video_player.dart';
 
@@ -26,6 +27,76 @@ class _PlayerViewState extends State<PlayerView> {
   double? _drag; // slider value while dragging (ms)
   String? _seekFlash;
   TapDownDetails? _lastDown;
+  bool _mobile = false;
+  String? _fallbackId;
+
+  /// When YouTube blocks direct streams, play with YouTube's own player
+  /// inside the app so the video always plays.
+  Widget _webFallback() {
+    final id = p.current!.id;
+    if (_fallbackId != id) {
+      _fallbackId = id;
+      _mobile = false;
+    }
+    final url = _mobile
+        ? 'https://m.youtube.com/watch?v=$id'
+        : 'https://www.youtube.com/embed/$id?autoplay=1&playsinline=1&rel=0';
+    return Stack(children: [
+      const Positioned.fill(child: ColoredBox(color: Colors.black)),
+      Positioned.fill(
+        child: InAppWebView(
+          key: ValueKey(url),
+          initialUrlRequest: URLRequest(url: WebUri(url)),
+          initialSettings: InAppWebViewSettings(
+            javaScriptEnabled: true,
+            mediaPlaybackRequiresUserGesture: false,
+            allowsInlineMediaPlayback: true,
+          ),
+        ),
+      ),
+      Positioned(
+        left: 0,
+        top: 0,
+        child: SafeArea(
+          bottom: false,
+          child: Row(children: [
+            IconButton(
+              icon: const Icon(Icons.keyboard_arrow_down, size: 28),
+              onPressed: widget.fullscreen ? () => p.setFullscreen(false) : p.minimize,
+            ),
+            IconButton(
+              tooltip: 'Error',
+              icon: const Icon(Icons.info_outline, size: 20),
+              onPressed: () => showDialog(
+                context: context,
+                builder: (c) => AlertDialog(
+                  title: const Text('ព័ត៌មាន error'),
+                  content: SingleChildScrollView(
+                      child: SelectableText(p.error ?? '',
+                          style: const TextStyle(fontSize: 12))),
+                  actions: [
+                    TextButton(
+                      onPressed: () {
+                        Navigator.pop(c);
+                        p.retry();
+                      },
+                      child: const Text('ព្យាយាមម្តងទៀត'),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            if (!_mobile)
+              TextButton(
+                onPressed: () => setState(() => _mobile = true),
+                child: const Text('មិនចាក់? បើកតាម YouTube mobile',
+                    style: TextStyle(fontSize: 12)),
+              ),
+          ]),
+        ),
+      ),
+    ]);
+  }
 
   PlayerController get p => PlayerController.instance;
 
@@ -100,7 +171,8 @@ class _PlayerViewState extends State<PlayerView> {
 
     final live = ListenableBuilder(
       listenable: Listenable.merge([p, LibraryStore.instance]),
-      builder: (_, __) => content(),
+      builder: (_, __) =>
+          (p.error != null && p.current != null) ? _webFallback() : content(),
     );
     if (widget.fullscreen) return live;
     return AspectRatio(aspectRatio: 16 / 9, child: live);
