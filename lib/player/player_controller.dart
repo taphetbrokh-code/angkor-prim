@@ -102,7 +102,6 @@ class PlayerController extends ChangeNotifier with WidgetsBindingObserver {
       streams = s;
       await audio.setAudioSource(AudioSource.uri(
         Uri.parse(s.audioUrl),
-        headers: const {'User-Agent': kStreamUserAgent},
         tag: MediaItem(
           id: item.id,
           title: item.title,
@@ -154,7 +153,6 @@ class PlayerController extends ChangeNotifier with WidgetsBindingObserver {
     notifyListeners();
     final c = VideoPlayerController.networkUrl(
       Uri.parse(opt.url),
-      httpHeaders: const {'User-Agent': kStreamUserAgent},
       videoPlayerOptions: VideoPlayerOptions(mixWithOthers: true),
     );
     try {
