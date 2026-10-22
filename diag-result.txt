@@ -1,0 +1,61 @@
+search ok: 20 results
+
+===== video RNkXPdeTgy0 =====
+[default] FAILED after 1547ms: VideoUnavailableException: Video 'RNkXPdeTgy0' is unavailable
+In most cases, this error indicates that the video doesn't exist, is private, or has been taken down.
+If you can however open this video in your browser in incognito mode, it most likely means that YouTube changed something, which broke this library.
+Please report this issue on GitHub in that case.
+[androidSdkless] FAILED after 768ms: VideoUnavailableException: Video 'RNkXPdeTgy0' is unavailable
+In most cases, this error indicates that the video doesn't exist, is private, or has been taken down.
+If you can however open this video in your browser in incognito mode, it most likely means that YouTube changed something, which broke this library.
+Please report this issue on GitHub in that case.
+[androidVr] FAILED after 805ms: VideoUnavailableException: Video 'RNkXPdeTgy0' is unavailable
+In most cases, this error indicates that the video doesn't exist, is private, or has been taken down.
+If you can however open this video in your browser in incognito mode, it most likely means that YouTube changed something, which broke this library.
+Please report this issue on GitHub in that case.
+[ios] FAILED after 744ms: VideoUnavailableException: Video 'RNkXPdeTgy0' is unavailable
+In most cases, this error indicates that the video doesn't exist, is private, or has been taken down.
+If you can however open this video in your browser in incognito mode, it most likely means that YouTube changed something, which broke this library.
+Please report this issue on GitHub in that case.
+[tv] FAILED after 757ms: VideoUnavailableException: Video 'RNkXPdeTgy0' is unavailable
+In most cases, this error indicates that the video doesn't exist, is private, or has been taken down.
+If you can however open this video in your browser in incognito mode, it most likely means that YouTube changed something, which broke this library.
+Please report this issue on GitHub in that case.
+[mweb] FAILED after 742ms: VideoUnavailableException: Video 'RNkXPdeTgy0' is unavailable
+In most cases, this error indicates that the video doesn't exist, is private, or has been taken down.
+If you can however open this video in your browser in incognito mode, it most likely means that YouTube changed something, which broke this library.
+Please report this issue on GitHub in that case.
+[android] FAILED after 770ms: VideoUnavailableException: Video 'RNkXPdeTgy0' is unavailable
+In most cases, this error indicates that the video doesn't exist, is private, or has been taken down.
+If you can however open this video in your browser in incognito mode, it most likely means that YouTube changed something, which broke this library.
+Please report this issue on GitHub in that case.
+
+===== video pRz2m8vJQJA =====
+[default] FAILED after 1492ms: VideoUnavailableException: Video 'pRz2m8vJQJA' is unavailable
+In most cases, this error indicates that the video doesn't exist, is private, or has been taken down.
+If you can however open this video in your browser in incognito mode, it most likely means that YouTube changed something, which broke this library.
+Please report this issue on GitHub in that case.
+[androidSdkless] FAILED after 740ms: VideoUnavailableException: Video 'pRz2m8vJQJA' is unavailable
+In most cases, this error indicates that the video doesn't exist, is private, or has been taken down.
+If you can however open this video in your browser in incognito mode, it most likely means that YouTube changed something, which broke this library.
+Please report this issue on GitHub in that case.
+[androidVr] FAILED after 891ms: VideoUnavailableException: Video 'pRz2m8vJQJA' is unavailable
+In most cases, this error indicates that the video doesn't exist, is private, or has been taken down.
+If you can however open this video in your browser in incognito mode, it most likely means that YouTube changed something, which broke this library.
+Please report this issue on GitHub in that case.
+[ios] FAILED after 731ms: VideoUnavailableException: Video 'pRz2m8vJQJA' is unavailable
+In most cases, this error indicates that the video doesn't exist, is private, or has been taken down.
+If you can however open this video in your browser in incognito mode, it most likely means that YouTube changed something, which broke this library.
+Please report this issue on GitHub in that case.
+[tv] FAILED after 798ms: VideoUnavailableException: Video 'pRz2m8vJQJA' is unavailable
+In most cases, this error indicates that the video doesn't exist, is private, or has been taken down.
+If you can however open this video in your browser in incognito mode, it most likely means that YouTube changed something, which broke this library.
+Please report this issue on GitHub in that case.
+[mweb] FAILED after 875ms: VideoUnavailableException: Video 'pRz2m8vJQJA' is unavailable
+In most cases, this error indicates that the video doesn't exist, is private, or has been taken down.
+If you can however open this video in your browser in incognito mode, it most likely means that YouTube changed something, which broke this library.
+Please report this issue on GitHub in that case.
+[android] FAILED after 827ms: VideoUnavailableException: Video 'pRz2m8vJQJA' is unavailable
+In most cases, this error indicates that the video doesn't exist, is private, or has been taken down.
+If you can however open this video in your browser in incognito mode, it most likely means that YouTube changed something, which broke this library.
+Please report this issue on GitHub in that case.
