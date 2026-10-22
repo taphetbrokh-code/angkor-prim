@@ -2,6 +2,7 @@
 import 'package:youtube_explode_dart/youtube_explode_dart.dart' as y;
 
 import '../models.dart';
+import 'stream_proxy.dart';
 
 /// User-Agent that matches the default client used to resolve streams.
 const kStreamUserAgent =
@@ -73,13 +74,19 @@ class YtService {
     final m = await _yt.videos.streamsClient.getManifest(id);
 
     // ---- audio ----
+    final proxy = StreamProxy.instance;
+    Future<String> local(y.StreamInfo s, String kind) => proxy.wrap(
+        s.url,
+        s.size.totalBytes,
+        '$kind/${s.container == y.StreamContainer.mp4 ? 'mp4' : s.container.name}');
+
     String? audioUrl;
     final mp4Audio =
         m.audioOnly.where((s) => s.container == y.StreamContainer.mp4).toList();
     if (mp4Audio.isNotEmpty) {
-      audioUrl = mp4Audio.withHighestBitrate().url.toString();
+      audioUrl = await local(mp4Audio.withHighestBitrate(), 'audio');
     } else if (m.audioOnly.isNotEmpty) {
-      audioUrl = m.audioOnly.withHighestBitrate().url.toString();
+      audioUrl = await local(m.audioOnly.withHighestBitrate(), 'audio');
     }
 
     // ---- video ----
@@ -93,15 +100,16 @@ class YtService {
     for (final s in h264) {
       final h = s.videoResolution.height;
       if (h <= 0 || h > 1080) continue;
-      byHeight.putIfAbsent(
-          h, () => VideoOption(label: '${h}p', height: h, url: s.url.toString()));
+      if (byHeight.containsKey(h)) continue;
+      byHeight[h] = VideoOption(label: '${h}p', height: h, url: await local(s, 'video'));
     }
     if (m.muxed.isNotEmpty) {
       final mux = m.muxed.withHighestBitrate();
       final h = mux.videoResolution.height;
+      final muxUrl = await local(mux, 'video');
       byHeight.putIfAbsent(
-          h, () => VideoOption(label: '${h}p', height: h, url: mux.url.toString()));
-      audioUrl ??= mux.url.toString();
+          h, () => VideoOption(label: '${h}p', height: h, url: muxUrl));
+      audioUrl ??= muxUrl;
     }
 
     if (audioUrl == null) {
