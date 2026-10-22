@@ -101,17 +101,18 @@ class PlayerController extends ChangeNotifier with WidgetsBindingObserver {
       final s = await YtService.streams(item.id);
       if (token != _token) return;
       streams = s;
-      await audio.setAudioSource(AudioSource.uri(
-        Uri.parse(s.audioUrl),
-        tag: MediaItem(
-          id: item.id,
-          title: item.title,
-          artist: item.author,
-          album: 'ANGKOR PRIM',
-          artUri: Uri.parse(item.thumb),
-          duration: item.durationSec > 0 ? item.duration : null,
-        ),
-      ));
+      final tag = MediaItem(
+        id: item.id,
+        title: item.title,
+        artist: item.author,
+        album: 'ANGKOR PRIM',
+        artUri: Uri.parse(item.thumb),
+        duration: item.durationSec > 0 ? item.duration : null,
+      );
+      final uri = Uri.parse(s.audioUrl);
+      await audio.setAudioSource(s.audioHls
+          ? HlsAudioSource(uri, tag: tag)
+          : AudioSource.uri(uri, tag: tag));
       if (token != _token) return;
       audio.play();
       loading = false;
@@ -155,6 +156,7 @@ class PlayerController extends ChangeNotifier with WidgetsBindingObserver {
     notifyListeners();
     final c = VideoPlayerController.networkUrl(
       Uri.parse(opt.url),
+      formatHint: opt.hls ? VideoFormat.hls : null,
       videoPlayerOptions: VideoPlayerOptions(mixWithOthers: true),
     );
     try {
