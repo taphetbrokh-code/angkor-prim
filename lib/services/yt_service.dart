@@ -3,6 +3,7 @@ import 'package:youtube_explode_dart/youtube_explode_dart.dart' as y;
 
 import '../models.dart';
 import 'stream_proxy.dart';
+import 'webview_solver.dart';
 
 /// User-Agent that matches the default client used to resolve streams.
 const kStreamUserAgent =
@@ -13,7 +14,8 @@ const kStreamUserAgent =
 class YtService {
   YtService._();
 
-  static y.YoutubeExplode _yt = y.YoutubeExplode();
+  static final WebViewEJSSolver _solver = WebViewEJSSolver();
+  static y.YoutubeExplode _yt = y.YoutubeExplode(jsSolver: _solver);
   static final Map<String, y.Video> _videoCache = {};
 
   /// Recreate the client (useful after network errors).
@@ -21,7 +23,7 @@ class YtService {
     try {
       _yt.close();
     } catch (_) {}
-    _yt = y.YoutubeExplode();
+    _yt = y.YoutubeExplode(jsSolver: _solver);
   }
 
   static VItem fromVideo(y.Video v) => VItem(
@@ -73,10 +75,11 @@ class YtService {
   // Clients to try, in order. The first one whose audio can really be
   // downloaded wins and is remembered, so the next video starts faster.
   static final List<(String, List<y.YoutubeApiClient>?)> _clients = [
+    ('tv', [y.YoutubeApiClient.tv]),
+    ('web', [y.YoutubeApiClient.safari]),
     ('androidVr', [y.YoutubeApiClient.androidVr]),
     ('ios', [y.YoutubeApiClient.ios]),
-    ('default', null),
-    ('tv', [y.YoutubeApiClient.tv]),
+    ('android', [y.YoutubeApiClient.androidSdkless]),
     ('mweb', [y.YoutubeApiClient.mweb]),
   ];
   static int _goodClient = 0;
@@ -103,21 +106,23 @@ class YtService {
             .getManifest(id, ytClients: clients)
             .timeout(const Duration(seconds: 15));
         final audio = _bestAudio(m);
-        if (audio == null && m.muxed.isEmpty) {
+        final y.StreamInfo? probe = audio ??
+            (m.muxed.isNotEmpty ? m.muxed.withHighestBitrate() : null) ??
+            (m.hls.isNotEmpty ? m.hls.first : null);
+        if (probe == null) {
           errors.add('$name: no streams');
           continue;
         }
         // probe: can we really download the first bytes?
-        final y.StreamInfo probe = audio ?? m.muxed.withHighestBitrate();
         await _yt.videos.streamsClient
             .get(probe)
             .first
-            .timeout(const Duration(seconds: 8));
+            .timeout(const Duration(seconds: 10));
         _goodClient = i;
         return m;
       } catch (e) {
-        final msg = '$e';
-        errors.add('$name: ${msg.length > 120 ? msg.substring(0, 120) : msg}');
+        final msg = '$e'.split('\n').first;
+        errors.add('$name: ${msg.length > 140 ? msg.substring(0, 140) : msg}');
       }
     }
     throw Exception(errors.join('\n'));
@@ -164,12 +169,34 @@ class YtService {
       audioUrl ??= muxUrl;
     }
 
+    // HLS (m3u8) streams from the web client: played directly by ExoPlayer.
+    var audioHls = false;
+    if (audioUrl == null && m.hls.isNotEmpty) {
+      final hlsAudio = m.hls.whereType<y.HlsAudioStreamInfo>().toList()
+        ..sort((a, b) => b.bitrate.compareTo(a.bitrate));
+      final hlsMuxed = m.hls.whereType<y.HlsMuxedStreamInfo>().toList()
+        ..sort((a, b) => a.bitrate.compareTo(b.bitrate));
+      if (hlsAudio.isNotEmpty) {
+        audioUrl = hlsAudio.first.url.toString();
+        audioHls = true;
+      } else if (hlsMuxed.isNotEmpty) {
+        audioUrl = hlsMuxed.first.url.toString();
+        audioHls = true;
+      }
+      for (final s in hlsMuxed) {
+        final h = s.videoResolution.height;
+        if (h <= 0 || h > 1080) continue;
+        byHeight[h] = VideoOption(
+            label: '${h}p', height: h, url: s.url.toString(), hls: true);
+      }
+    }
+
     if (audioUrl == null) {
       throw Exception('រកមិនឃើញ stream សម្រាប់វីដេអូនេះទេ');
     }
     final videos = byHeight.values.toList()
       ..sort((a, b) => b.height.compareTo(a.height));
-    return PlayStreams(audioUrl: audioUrl, videos: videos);
+    return PlayStreams(audioUrl: audioUrl, videos: videos, audioHls: audioHls);
   }
 
   // ---------------- channel ----------------
