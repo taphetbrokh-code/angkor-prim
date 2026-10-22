@@ -110,9 +110,13 @@ class PlayerController extends ChangeNotifier with WidgetsBindingObserver {
         duration: item.durationSec > 0 ? item.duration : null,
       );
       final uri = Uri.parse(s.audioUrl);
-      await audio.setAudioSource(s.audioHls
-          ? HlsAudioSource(uri, tag: tag)
-          : AudioSource.uri(uri, tag: tag));
+      YtService.status.value = 'កំពុងផ្ទុកសំឡេង...';
+      await audio
+          .setAudioSource(s.audioHls
+              ? HlsAudioSource(uri, tag: tag)
+              : AudioSource.uri(uri, tag: tag))
+          .timeout(const Duration(seconds: 40),
+              onTimeout: () => throw Exception('ផ្ទុកសំឡេងយូរពេក (timeout)'));
       if (token != _token) return;
       audio.play();
       loading = false;
